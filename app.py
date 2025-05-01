@@ -2,6 +2,7 @@ import gradio as gr
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 from economics import (
     months, subscription_price, market_size, install_to_paid_conversion,
     max_churn_rate, min_churn_rate, churn_improvement_rate,
@@ -12,13 +13,24 @@ from economics import (
     inflation_rate_annual, monthly_discount_rate
 )
 
+# Constants
+months = 36
+marketing_growth_rate = 0.10
+base_maintenance_cost = 5000
+per_user_maintenance_cost = 2.5
+development_cost = 100000
+cpi_increase_rate = 0.02
+store_commission_rate = 0.30
+inflation_rate_annual = 0.04
+monthly_discount_rate = (1 + inflation_rate_annual) ** (1 / 12) - 1
+churn_improvement_rate = 0.08
+
 def run_model(
     subscription_price,
     market_size,
     install_to_paid_conversion,
     max_churn_rate,
     min_churn_rate,
-    day_30_retention,
     day_90_retention,
     base_cpi,
     initial_marketing_budget
@@ -51,16 +63,20 @@ def run_model(
             months_retained = m - cohort
             if months_retained == 0:
                 retention_rate = 1.0
-            elif months_retained == 1:
-                retention_rate = day_30_retention
             elif months_retained == 3:
                 retention_rate = day_90_retention
             else:
-                cohort_churn_rate = max(
-                    min_churn_rate,
-                    max_churn_rate * (1 - churn_improvement_rate) ** months_retained
-                )
-                retention_rate = (1 - cohort_churn_rate) ** months_retained
+                # Calculate retention rate based on months retained
+                if months_retained < 3:
+                    # Linear interpolation between 1.0 and day_90_retention for first 3 months
+                    retention_rate = 1.0 - (months_retained / 3) * (1.0 - day_90_retention)
+                else:
+                    # After 90 days, use the churn model
+                    cohort_churn_rate = max(
+                        min_churn_rate,
+                        max_churn_rate * (1 - churn_improvement_rate) ** (months_retained - 3)
+                    )
+                    retention_rate = day_90_retention * ((1 - cohort_churn_rate) ** (months_retained - 3))
             
             retained = int(users * retention_rate)
             cohort_matrix[cohort][m] = retained * subscription_price
@@ -175,8 +191,13 @@ def run_model(
     )
 
 # Create Gradio interface
-with gr.Blocks(title="Fitness App Economics Model") as demo:
-    gr.Markdown("# Fitness App Economics Model")
+with gr.Blocks(title="Fitness App Economics Model", theme=gr.themes.Soft()) as demo:
+    gr.Markdown("""
+    # Fitness App Economics Model
+    
+    This interactive tool helps model and analyze the economics of a fitness app subscription business.
+    Adjust the parameters below to see how they affect key metrics like revenue, user growth, and required investment.
+    """)
     
     with gr.Row():
         with gr.Column():
@@ -189,11 +210,11 @@ with gr.Blocks(title="Fitness App Economics Model") as demo:
                 label="Market Size"
             )
             install_to_paid_conversion = gr.Slider(
-                minimum=0.01, maximum=0.3, value=0.1, step=0.01,
+                minimum=0.01, maximum=0.5, value=0.39, step=0.01,
                 label="Install to Paid Conversion Rate"
             )
             max_churn_rate = gr.Slider(
-                minimum=0.1, maximum=0.4, value=0.2, step=0.01,
+                minimum=0.12, maximum=0.4, value=0.2, step=0.01,
                 label="Maximum Churn Rate"
             )
             min_churn_rate = gr.Slider(
@@ -201,10 +222,6 @@ with gr.Blocks(title="Fitness App Economics Model") as demo:
                 label="Minimum Churn Rate"
             )
         with gr.Column():
-            day_30_retention = gr.Slider(
-                minimum=0.01, maximum=0.3, value=0.07, step=0.01,
-                label="30-Day Retention Rate"
-            )
             day_90_retention = gr.Slider(
                 minimum=0.1, maximum=0.5, value=0.24, step=0.01,
                 label="90-Day Retention Rate"
@@ -218,7 +235,7 @@ with gr.Blocks(title="Fitness App Economics Model") as demo:
                 label="Initial Marketing Budget ($)"
             )
     
-    run_button = gr.Button("Run Model")
+    run_button = gr.Button("Run Model", variant="primary")
     
     with gr.Row():
         with gr.Column():
@@ -244,11 +261,12 @@ with gr.Blocks(title="Fitness App Economics Model") as demo:
         fn=run_model,
         inputs=[
             subscription_price, market_size, install_to_paid_conversion,
-            max_churn_rate, min_churn_rate, day_30_retention, day_90_retention,
+            max_churn_rate, min_churn_rate, day_90_retention,
             base_cpi, initial_marketing_budget
         ],
         outputs=[main_metrics, cohort_metrics, profit_chart, margin_chart, investment_chart]
     )
 
+# For Hugging Face Spaces deployment
 if __name__ == "__main__":
-    demo.launch(share=True) 
+    demo.launch() 
