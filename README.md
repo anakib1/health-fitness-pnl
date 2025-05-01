@@ -1,47 +1,52 @@
-# Fitness App Economics Model
+---
+title: Health & Fitness App Economics Model
+emoji: 💪
+colorFrom: indigo
+colorTo: purple
+sdk: gradio
+sdk_version: 4.0.0
+app_file: app.py
+pinned: false
+---
 
-An interactive web application for modeling the economics of a fitness app subscription business. This tool helps analyze key metrics such as revenue, user growth, churn rates, and required investment.
+# Health & Fitness App Economics Model
+
+An interactive tool for modeling and analyzing the economics of a fitness app subscription business.
 
 ## Features
 
-- Interactive parameter adjustment
-- Real-time visualization of key metrics
-- Cohort analysis
-- LTV and CAC calculations
-- Investment requirements tracking
+- Interactive parameter adjustment for:
+  - Subscription pricing
+  - Market size
+  - Conversion rates
+  - Retention metrics
+  - Marketing costs
+  - Churn rates
 
-## Key Metrics
+- Real-time visualization of:
+  - Monthly revenue and profit
+  - User growth trends
+  - EBITDA margins
+  - Required investment
+  - Cohort analysis
+
+## Key Metrics Analyzed
 
 - Monthly Revenue and Profit
 - User Growth and Retention
 - EBITDA Margin
 - Required Investment
-- Cohort-specific metrics
+- Customer Acquisition Cost (CAC)
+- Lifetime Value (LTV)
+- Cohort Performance
 
 ## Usage
 
-1. Adjust the parameters using the sliders:
-   - Subscription Price
-   - Market Size
-   - Conversion Rates
-   - Churn Rates
-   - Retention Rates
-   - Marketing Budget
-
-2. Click "Run Model" to update all calculations and visualizations
-
-3. Review the results in the tables and charts
-
-## Model Parameters
-
-- **Subscription Price**: $5-$50
-- **Market Size**: 1M-1B users
-- **Install to Paid Conversion**: 1%-50%
-- **Churn Rates**: 12%-40% (max), 5%-20% (min)
-- **90-Day Retention**: 10%-50%
-- **Base CPI**: $0.5-$5.0
-- **Initial Marketing Budget**: $5K-$50K
+1. Adjust the sliders to modify business parameters
+2. Click "Run Model" to update calculations
+3. View results in the tables and charts
+4. Analyze different scenarios by adjusting parameters
 
 ## Deployment
 
-This app is deployed on Hugging Face Spaces. You can access it at: [Your Hugging Face Space URL] 
+This app is hosted on Hugging Face Spaces at: https://huggingface.co/spaces/anakib1/health-fitness-app 
