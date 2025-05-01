@@ -210,11 +210,11 @@ with gr.Blocks(title="Fitness App Economics Model", theme=gr.themes.Soft()) as d
                 label="Market Size"
             )
             install_to_paid_conversion = gr.Slider(
-                minimum=0.01, maximum=0.5, value=0.39, step=0.01,
+                minimum=0.01, maximum=0.5, value=0.12, step=0.01,
                 label="Install to Paid Conversion Rate"
             )
             max_churn_rate = gr.Slider(
-                minimum=0.12, maximum=0.4, value=0.2, step=0.01,
+                minimum=0.12, maximum=0.5, value=0.4, step=0.01,
                 label="Maximum Churn Rate"
             )
             min_churn_rate = gr.Slider(
