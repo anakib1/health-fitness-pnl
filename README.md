@@ -4,7 +4,7 @@ emoji: 💪
 colorFrom: indigo
 colorTo: purple
 sdk: gradio
-sdk_version: 4.0.0
+sdk_version: 5.28.0
 app_file: app.py
 pinned: false
 ---
@@ -49,4 +49,4 @@ An interactive tool for modeling and analyzing the economics of a fitness app su
 
 ## Deployment
 
-This app is hosted on Hugging Face Spaces at: https://huggingface.co/spaces/anakib1/health-fitness-app 
+This app is hosted on Hugging Face Spaces at: https://huggingface.co/spaces/anakib1/health-fitness-app
