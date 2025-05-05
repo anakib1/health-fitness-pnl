@@ -13,6 +13,7 @@ class ChartCreator:
         self._create_spend_chart(df)
         if cost_components is not None:
             self._create_stacked_cost_chart(cost_components)
+        self._create_profit_investment_chart(df)
         return self.figures
 
     def _create_profit_chart(self, df):
@@ -75,4 +76,16 @@ class ChartCreator:
         plt.title('Stacked Cost Breakdown Over Time')
         plt.legend(loc='upper left')
         plt.grid(True, axis='y', linestyle='--', alpha=0.7)
+        self.figures.append(plt.gcf())
+
+    def _create_profit_investment_chart(self, df):
+        plt.figure(figsize=(12, 7))
+        plt.bar(df["Month"], df["Net Profit ($M)"], color='tab:blue', alpha=0.6, label='Net Profit ($M)')
+        plt.bar(df["Month"], -df["Required Investment ($M)"], color='tab:red', alpha=0.4, label='Required Investment ($M, negative)')
+        plt.xlabel('Month')
+        plt.ylabel('Amount ($M)')
+        plt.title('Monthly Net Profit and Required Investment')
+        plt.legend()
+        plt.grid(True, axis='y', linestyle='--', alpha=0.7)
+        plt.tight_layout()
         self.figures.append(plt.gcf()) 

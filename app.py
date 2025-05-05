@@ -46,6 +46,8 @@ def run_model(
     avg_ltv = cohort_df['ltv'].mean() if not cohort_df.empty else 0
     avg_cac = cohort_df['cac'].mean() if not cohort_df.empty else 0
     avg_ltv_cac = cohort_df['ltv_cac_ratio'].mean() if not cohort_df.empty else 0
+    # Calculate total investment required (sum of Required Investment column)
+    total_investment_required = main_metrics_df['Required Investment ($M)'].sum() if not main_metrics_df.empty else 0
     
     # Format DataFrames for display
     main_metrics_df = main_metrics_df.round(2)
@@ -59,9 +61,11 @@ def run_model(
         charts[2],  # Required Investment
         charts[3],  # Marketing and Maintenance Spend
         charts[4],  # Stacked Cost Chart
+        charts[5],  # Profit and Required Investment Combined Chart
         avg_ltv,
         avg_cac,
-        avg_ltv_cac
+        avg_ltv_cac,
+        total_investment_required
     )
 
 # Create Gradio interface
@@ -158,6 +162,8 @@ with gr.Blocks(title="Fitness App Economics Model", theme=gr.themes.Soft()) as d
                 row_count=(60, "fixed"),
                 type="pandas"
             )
+            gr.Markdown("### Total Investment Required (Sum of Required Investment)")
+            total_investment_out = gr.Number(label="Total Investment Required ($M)")
             gr.Markdown("### Average LTV, CAC, and LTV/CAC Ratio (Whole Period)")
             avg_ltv_out = gr.Number(label="Average LTV ($)")
             avg_cac_out = gr.Number(label="Average CAC ($)")
@@ -192,6 +198,10 @@ with gr.Blocks(title="Fitness App Economics Model", theme=gr.themes.Soft()) as d
         gr.Markdown("## Stacked Cost Breakdown")
         stacked_cost_chart = gr.Plot()
     
+    with gr.Row():
+        gr.Markdown("## Net Profit and Required Investment")
+        profit_investment_chart = gr.Plot()
+    
     run_button.click(
         fn=run_model,
         inputs=[
@@ -201,7 +211,7 @@ with gr.Blocks(title="Fitness App Economics Model", theme=gr.themes.Soft()) as d
             max_marketing_budget, rebill_rate, store_payment_percentage, trial_period_days,
             development_period_months, marketing_team_salary, marketing_team_per_budget
         ],
-        outputs=[main_metrics, cohort_metrics, profit_chart, margin_chart, investment_chart, spend_chart, stacked_cost_chart, avg_ltv_out, avg_cac_out, avg_ltv_cac_out]
+        outputs=[main_metrics, cohort_metrics, profit_chart, margin_chart, investment_chart, spend_chart, stacked_cost_chart, profit_investment_chart, avg_ltv_out, avg_cac_out, avg_ltv_cac_out, total_investment_out]
     )
 
 if __name__ == "__main__":
