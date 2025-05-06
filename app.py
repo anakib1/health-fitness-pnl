@@ -50,6 +50,9 @@ def run_model(
     # Calculate total investment required (sum of Required Investment column)
     total_investment_required = main_metrics_df['Required Investment ($M)'].sum() if not main_metrics_df.empty else 0
     
+    # Calculate total profit at 2 years (24 months)
+    total_profit_2y = main_metrics_df.loc[23, "Cumulative Profit ($M)"] if len(main_metrics_df) > 23 else 0
+    
     # Format DataFrames for display
     main_metrics_df = main_metrics_df.round(2)
     cohort_df = cohort_df.round(2)
@@ -73,6 +76,7 @@ def run_model(
         avg_cac,
         avg_ltv_cac,
         total_investment_required,
+        total_profit_2y,
         main_metrics_csv.name,
         cohort_metrics_csv.name
     )
@@ -174,6 +178,8 @@ with gr.Blocks(title="Fitness App Economics Model", theme=gr.themes.Soft()) as d
             main_metrics_download = gr.File(label="Download Main Metrics CSV")
             gr.Markdown("### Total Investment Required (Sum of Required Investment)")
             total_investment_out = gr.Number(label="Total Investment Required ($M)")
+            gr.Markdown("### Total Profit at 2 Years")
+            total_profit_2y_out = gr.Number(label="Total Profit at 2 Years ($M)")
             gr.Markdown("### Average LTV, CAC, and LTV/CAC Ratio (Whole Period)")
             avg_ltv_out = gr.Number(label="Average LTV ($)")
             avg_cac_out = gr.Number(label="Average CAC ($)")
@@ -222,7 +228,7 @@ with gr.Blocks(title="Fitness App Economics Model", theme=gr.themes.Soft()) as d
             max_marketing_budget, rebill_rate, store_payment_percentage, trial_period_days,
             development_period_months, marketing_team_salary, marketing_team_per_budget
         ],
-        outputs=[main_metrics, cohort_metrics, profit_chart, margin_chart, investment_chart, spend_chart, stacked_cost_chart, profit_investment_chart, avg_ltv_out, avg_cac_out, avg_ltv_cac_out, total_investment_out, main_metrics_download, cohort_metrics_download]
+        outputs=[main_metrics, cohort_metrics, profit_chart, margin_chart, investment_chart, spend_chart, stacked_cost_chart, profit_investment_chart, avg_ltv_out, avg_cac_out, avg_ltv_cac_out, total_investment_out, total_profit_2y_out, main_metrics_download, cohort_metrics_download]
     )
 
 if __name__ == "__main__":

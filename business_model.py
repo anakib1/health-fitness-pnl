@@ -31,6 +31,9 @@ class BusinessParameters:
     max_marketing_budget: float = 300000  # Cap at 300K per month
     developer_salary: float = 5000
     developer_count: int = 3
+    ml_developer_salary: float = 5000
+    ml_developer_count_initial: int = 3
+    ml_developer_count_ongoing: int = 2
     monthly_operational_cost: float = 7000
     per_user_maintenance_cost: float = 0.5  # Reduced to $0.5 per user
     cpi_increase_rate: float = 0.00
@@ -40,7 +43,7 @@ class BusinessParameters:
     trial_period_days: int = 7  # Default 7-day trial period
     marketing_team_salary: float = 2500   # Monthly salary per marketing team member
     marketing_team_per_budget: float = 50000  # $50K/month per marketing team member
-    refund_rate: float = 0.03  # 2% default refund rate
+    refund_rate: float = 0.03  # 3% default refund rate
     
     # Fixed distribution between tiers (70/20/10)
     monthly_distribution: float = 0.70
@@ -186,6 +189,12 @@ class BusinessModel:
             for i in range(self.params.months)
         ]
         
+        # Calculate ML team costs
+        ml_developer_costs = [
+            self.params.ml_developer_salary * (self.params.ml_developer_count_initial if i < self.params.development_period_months else self.params.ml_developer_count_ongoing)
+            for i in range(self.params.months)
+        ]
+        
         # Calculate operational costs (start after development period)
         operational_costs = [
             self.params.monthly_operational_cost if i >= self.params.development_period_months else 0
@@ -211,6 +220,7 @@ class BusinessModel:
         
         total_cost = (np.array(marketing_budgets) + 
                      np.array(development_costs) + 
+                     np.array(ml_developer_costs) +
                      np.array(operational_costs) + 
                      np.array(maintenance_costs) +
                      np.array(marketing_team_costs))
@@ -244,6 +254,7 @@ class BusinessModel:
             "Total Cost ($M)": total_cost / 1e6,
             "Marketing Spend ($M)": np.array(marketing_budgets) / 1e6,
             "Development Cost ($M)": np.array(development_costs) / 1e6,
+            "ML Team Cost ($M)": np.array(ml_developer_costs) / 1e6,
             "Marketing Team Cost ($M)": np.array(marketing_team_costs) / 1e6,
             "Operational Cost ($M)": np.array(operational_costs) / 1e6,
             "Maintenance Cost ($M)": np.array(maintenance_costs) / 1e6,
@@ -265,6 +276,7 @@ class BusinessModel:
             "Month": range(1, self.params.months + 1),
             "Marketing": marketing_budgets,
             "Development": development_costs,
+            "ML Team": ml_developer_costs,
             "Marketing Team": marketing_team_costs,
             "Operations": operational_costs,
             "User Maintenance": maintenance_costs,
