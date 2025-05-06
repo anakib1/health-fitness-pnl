@@ -71,9 +71,11 @@ class ChartCreator:
         labels = ["Marketing", "Development", "Marketing Team", "Operations", "User Maintenance"]
         data = [cost_df[label] / 1e6 for label in labels]
         plt.stackplot(cost_df["Month"], data, labels=labels)
+        # Plot revenue as a line
+        plt.plot(cost_df["Month"], cost_df["Revenue"] / 1e6, color='black', linewidth=2, label='Revenue')
         plt.xlabel('Month')
-        plt.ylabel('Cost ($M)')
-        plt.title('Stacked Cost Breakdown Over Time')
+        plt.ylabel('Amount ($M)')
+        plt.title('Stacked Cost Breakdown and Revenue Over Time')
         plt.legend(loc='upper left')
         plt.grid(True, axis='y', linestyle='--', alpha=0.7)
         self.figures.append(plt.gcf())

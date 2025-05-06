@@ -47,9 +47,9 @@ class BusinessParameters:
     quarterly_distribution: float = 0.20
     yearly_distribution: float = 0.10
     
-    seasonality_months: list = field(default_factory=lambda: [1, 2, 3])  # Q1
-    seasonality_cac_factor: float = 2.0  # CAC is 2x in Q1
-    seasonality_trial_to_paid_factor: float = 3.0  # trial-to-paid is 3x in Q1
+    seasonality_months: list = field(default_factory=lambda: [1])  # Only January
+    seasonality_cac_factor: float = 1.3  # CAC is 2x in January
+    seasonality_install_to_trial_factor: float = 1.15  # install-to-trial is 1.15x in January
 
     def __post_init__(self):
         # Validate subscription distributions sum to 1
@@ -85,7 +85,7 @@ class BusinessModel:
                 )
                 month_in_year = (i % 12) + 1
                 if month_in_year in self.params.seasonality_months:
-                    marketing_budgets.append(current_budget * 2.0)
+                    marketing_budgets.append(current_budget * 2)
                 else:
                     marketing_budgets.append(current_budget)
         
@@ -103,7 +103,7 @@ class BusinessModel:
             month_in_year = (i % 12) + 1
             if month_in_year in self.params.seasonality_months:
                 current_cpi = self.params.base_cpi * self.params.seasonality_cac_factor
-                install_to_trial = min(self.params.install_to_trial_conversion * self.params.seasonality_trial_to_paid_factor, 1.0)
+                install_to_trial = min(self.params.install_to_trial_conversion * self.params.seasonality_install_to_trial_factor, 1.0)
             else:
                 current_cpi = self.params.base_cpi
                 install_to_trial = self.params.install_to_trial_conversion
@@ -125,6 +125,10 @@ class BusinessModel:
         
         # Calculate trial days per month (approximate)
         trial_months = self.params.trial_period_days / 30.44  # Average days in a month
+        
+        # Calculate churn rate from rebill rate
+        churn_rate = 1.0 / (1.0 + self.params.rebill_rate)
+        retention_rate = 1.0 - churn_rate
         
         for cohort in range(self.params.months):
             trial_users = trials[cohort]
@@ -148,20 +152,19 @@ class BusinessModel:
             for tier in self.subscription_tiers:
                 trial_user_count = tier_trials[tier]
                 if trial_user_count > 0:
-                    # Mark trial period in trial matrix
                     for m in range(cohort, min(cohort + int(trial_months) + 1, self.params.months)):
                         trial_matrix[cohort][m] += trial_user_count
             
-            # Calculate revenue for paid users
+            # Churn-based active user and revenue modeling
             for tier in self.subscription_tiers:
                 paid_user_count = tier_paid[tier]
                 if paid_user_count == 0:
                     continue
-                # Calculate revenue: all expected payments in the first paid month after trial
                 start_month = cohort + int(trial_months)  # Start after trial period
-                if start_month < self.params.months:
-                    total_payments = 1 + self.params.rebill_rate  # initial + average rebills
-                    cohort_matrix[cohort][start_month] += paid_user_count * tier.price * total_payments
+                for m in range(start_month, self.params.months):
+                    months_since_conversion = m - start_month
+                    active_users = paid_user_count * (retention_rate ** months_since_conversion)
+                    cohort_matrix[cohort][m] += active_users * tier.price
         
         return cohort_matrix, trial_matrix
 
@@ -222,7 +225,17 @@ class BusinessModel:
         inflation_factors = [(1 / ((1 + self.monthly_discount_rate) ** i)) 
                            for i in range(self.params.months)]
         inflation_adjusted_profit = operating_profit_net * inflation_factors
-        required_investment = np.where(cumulative_profit_net < 0, total_cost, 0)
+
+        # Calculate rolling required investment (cash buffer)
+        rolling_required_investment = []
+        cumulative_profit = 0
+        for i in range(self.params.months):
+            cumulative_profit += operating_profit_net[i]
+            if cumulative_profit < 0:
+                rolling_required_investment.append(-cumulative_profit)
+                cumulative_profit = 0
+            else:
+                rolling_required_investment.append(0)
 
         # Create main metrics DataFrame
         main_metrics_df = pd.DataFrame({
@@ -240,7 +253,7 @@ class BusinessModel:
             "EBITDA Margin (%)": np.round(np.divide(ebitda, net_revenue, out=np.zeros_like(ebitda), where=net_revenue!=0) * 100, 1),
             "Inflation Adjusted Profit ($M)": inflation_adjusted_profit / 1e6,
             "Cumulative Profit ($M)": cumulative_profit_net / 1e6,
-            "Required Investment ($M)": required_investment / 1e6,
+            "Required Investment ($M)": np.array(rolling_required_investment) / 1e6,
             "Active Users (K)": [u/1000 for u in active_paid_users],
             "Active Trials (K)": [t/1000 for t in active_trials],
             "New Users (K)": [u/1000 for u in new_paid_users],
@@ -254,7 +267,8 @@ class BusinessModel:
             "Development": development_costs,
             "Marketing Team": marketing_team_costs,
             "Operations": operational_costs,
-            "User Maintenance": maintenance_costs
+            "User Maintenance": maintenance_costs,
+            "Revenue": monthly_revenue
         })
 
         # Calculate cohort metrics
