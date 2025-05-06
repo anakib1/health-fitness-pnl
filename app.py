@@ -1,6 +1,7 @@
 import gradio as gr
 from business_model import BusinessParameters, BusinessModel
 import pandas as pd
+import tempfile
 
 def run_model(
     monthly_price: float,
@@ -53,6 +54,12 @@ def run_model(
     main_metrics_df = main_metrics_df.round(2)
     cohort_df = cohort_df.round(2)
     
+    # Save CSVs to temp files
+    main_metrics_csv = tempfile.NamedTemporaryFile(delete=False, suffix=".csv")
+    cohort_metrics_csv = tempfile.NamedTemporaryFile(delete=False, suffix=".csv")
+    main_metrics_df.to_csv(main_metrics_csv.name, index=False)
+    cohort_df.to_csv(cohort_metrics_csv.name, index=False)
+    
     return (
         main_metrics_df,
         cohort_df,
@@ -65,7 +72,9 @@ def run_model(
         avg_ltv,
         avg_cac,
         avg_ltv_cac,
-        total_investment_required
+        total_investment_required,
+        main_metrics_csv.name,
+        cohort_metrics_csv.name
     )
 
 # Create Gradio interface
@@ -162,6 +171,7 @@ with gr.Blocks(title="Fitness App Economics Model", theme=gr.themes.Soft()) as d
                 row_count=(60, "fixed"),
                 type="pandas"
             )
+            main_metrics_download = gr.File(label="Download Main Metrics CSV")
             gr.Markdown("### Total Investment Required (Sum of Required Investment)")
             total_investment_out = gr.Number(label="Total Investment Required ($M)")
             gr.Markdown("### Average LTV, CAC, and LTV/CAC Ratio (Whole Period)")
@@ -177,6 +187,7 @@ with gr.Blocks(title="Fitness App Economics Model", theme=gr.themes.Soft()) as d
                 row_count=(60, "fixed"),
                 type="pandas"
             )
+            cohort_metrics_download = gr.File(label="Download Cohort Metrics CSV")
     
     with gr.Row():
         with gr.Column():
@@ -211,7 +222,7 @@ with gr.Blocks(title="Fitness App Economics Model", theme=gr.themes.Soft()) as d
             max_marketing_budget, rebill_rate, store_payment_percentage, trial_period_days,
             development_period_months, marketing_team_salary, marketing_team_per_budget
         ],
-        outputs=[main_metrics, cohort_metrics, profit_chart, margin_chart, investment_chart, spend_chart, stacked_cost_chart, profit_investment_chart, avg_ltv_out, avg_cac_out, avg_ltv_cac_out, total_investment_out]
+        outputs=[main_metrics, cohort_metrics, profit_chart, margin_chart, investment_chart, spend_chart, stacked_cost_chart, profit_investment_chart, avg_ltv_out, avg_cac_out, avg_ltv_cac_out, total_investment_out, main_metrics_download, cohort_metrics_download]
     )
 
 if __name__ == "__main__":
