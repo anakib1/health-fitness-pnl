@@ -96,7 +96,7 @@ with gr.Blocks(title="Fitness App Economics Model", theme=gr.themes.Soft()) as d
         with gr.Column():
             gr.Markdown("### Subscription Prices")
             monthly_price = gr.Slider(
-                minimum=5, maximum=50, value=20, step=1,
+                minimum=5, maximum=50, value=24, step=1,
                 label="Monthly Subscription Price ($)"
             )
             quarterly_price = gr.Slider(
